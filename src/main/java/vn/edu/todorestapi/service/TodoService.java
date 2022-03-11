@@ -16,9 +16,18 @@ public class TodoService {
   @Autowired
   private TodoRepository todoRepository;
 
-  public List<Todo> getTodos(Integer limit) {
-    return Optional.ofNullable(limit).map(value -> todoRepository.findAll(PageRequest.of(value / 5, 5)).getContent())
-        .orElseGet(() -> todoRepository.findAll());
+  public long getCountTodo(String query) {
+    return Optional.ofNullable(query)
+        .map(value -> todoRepository.countByTitleLikeOrContentLike("%" + query.trim() + "%", "%" + query.trim() + "%"))
+        .orElseGet(
+            () -> todoRepository.count());
+  }
+
+  public List<Todo> getTodos(Integer page, Integer pageSize, String query) {
+    return Optional.ofNullable(query)
+        .map(value -> todoRepository.findAllByTitleLikeOrContentLike("%" + value.trim() + "%", "%" + value.trim() + "%",
+            PageRequest.of(page, pageSize)))
+        .orElseGet(() -> todoRepository.findAll(PageRequest.of(page, pageSize)).getContent());
   }
 
   public Todo getTodo(Long id) {
@@ -32,12 +41,10 @@ public class TodoService {
   }
 
   @Transactional
-  public Todo updateTodo(Long id, Todo todo) {
-    Todo existingTodo = todoRepository.findById(id)
-        .orElseThrow(() -> new IllegalStateException("job with id " + id + " does not exist"));
-    existingTodo.setTitle(todo.getTitle());
-    existingTodo.setContent(todo.getContent());
-    return todoRepository.save(existingTodo);
+  public Todo updateTodo(Todo todo) {
+    if (!todoRepository.existsById(todo.getId()))
+      throw new IllegalStateException("User width id " + todo.getId() + " does not exist");
+    return todoRepository.save(todo);
   }
 
   public void deleteTodo(Long id) {
