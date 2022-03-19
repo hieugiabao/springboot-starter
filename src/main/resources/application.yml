@@ -10,7 +10,13 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
+    show-sql: true
 
 server:
   port: 8000
+
+app:
+  jwt:
+    secret: mabaomatcuadieu
+    expirationMs: 6000000
