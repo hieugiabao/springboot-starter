@@ -1,7 +1,6 @@
 package vn.edu.todorestapi.exception;
 
 public class CustomException extends Exception {
-  private static final Long serialVersionUID = 1L;
 
   private String type;
   private String errCode;

@@ -2,7 +2,6 @@ package vn.edu.todorestapi.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -11,12 +10,13 @@ import javax.persistence.criteria.Root;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import vn.edu.todorestapi.domain.Todo;
+import vn.edu.todorestapi.payload.findParam.TodoFindParam;
 import vn.edu.todorestapi.repository.TodoRepository;
 
 @Service
@@ -24,31 +24,25 @@ public class TodoService {
   @Autowired
   private TodoRepository todoRepository;
 
-  public long getCountTodo(String query) {
-    return Optional.ofNullable(query)
-        .map(value -> todoRepository.countByTitleLikeOrContentLike("%" + query.trim() + "%", "%" + query.trim() + "%"))
-        .orElseGet(
-            () -> todoRepository.count());
-  }
+  public Page<Todo> getTodosPagging(Pageable pageable, TodoFindParam todoFindParam) {
+    return todoRepository.findAll(new Specification<Todo>() {
 
-  public List<Todo> getTodos(int page, int pageSize, String query) {
-    Page<Todo> _page = todoRepository.findAll(
-        new Specification<Todo>() {
-          @Override
-          public Predicate toPredicate(Root<Todo> root, CriteriaQuery<?> criteriaQuery,
-              CriteriaBuilder criteriaBuilder) {
-            List<Predicate> predicates = new ArrayList<Predicate>();
-            if (query != null) {
-              predicates.add(
-                  criteriaBuilder.or(
-                      criteriaBuilder.like(root.get("title"), "%" + query.trim() + "%"),
-                      criteriaBuilder.like(root.get("content"), "%" + query.trim() + "%")));
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
-          }
-        },
-        PageRequest.of(page, pageSize));
-    return _page.getContent();
+      @Override
+      public Predicate toPredicate(Root<Todo> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+        // TODO Auto-generated method stub
+        List<Predicate> predicates = new ArrayList<>();
+        if (todoFindParam != null) {
+          if (todoFindParam.getContent() != null)
+            predicates.add(criteriaBuilder.and(criteriaBuilder.like(criteriaBuilder.upper(root.get("content")),
+                "%" + todoFindParam.getContent().trim().toUpperCase() + "%")));
+          if (todoFindParam.getTitle() != null)
+            predicates.add(criteriaBuilder.and(criteriaBuilder.like(criteriaBuilder.upper(root.get("title")),
+                "%" + todoFindParam.getTitle().trim().toUpperCase() + "%")));
+        }
+        return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
+      }
+
+    }, pageable);
   }
 
   public Todo getTodo(Long id) {

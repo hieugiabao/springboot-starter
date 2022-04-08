@@ -1,5 +1,6 @@
 package vn.edu.todorestapi.domain;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +18,8 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -27,7 +30,9 @@ import lombok.NoArgsConstructor;
     @UniqueConstraint(columnNames = "username"),
     @UniqueConstraint(columnNames = "email")
 })
-public class User {
+public class User implements Serializable {
+  private static final long serialVersionUID = 1L;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -39,10 +44,12 @@ public class User {
   @NotBlank
   @Size(max = 50)
   @Email
+  @JsonIgnore
   private String email;
 
   @NotBlank
   @Size(max = 120)
+  @JsonIgnore
   private String password;
 
   @ManyToMany(fetch = FetchType.LAZY)
